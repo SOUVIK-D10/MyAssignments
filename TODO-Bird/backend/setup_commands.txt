@@ -1,0 +1,2 @@
+npm install express mongoose dotenv jsonwebtoken bcryptjs cors
+npm install -D typescript @types/node @types/express @types/mongoose @types/jsonwebtoken @types/bcryptjs @types/cors ts-node-dev

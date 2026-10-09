@@ -1,0 +1,73 @@
+import { Request, Response } from 'express';
+
+import { changePasswordService, loginService, logoutService, registerService } from '../services/auth.service';
+import { AuthenticatedRequest } from '../../middleware/auth.middleware';
+
+// USER REGISTRATION
+const register = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { email, password } = req.body;
+
+        const { token, user } = await registerService(email, password);
+
+        res.status(201).json({
+            message: 'User registered successfully.',
+            token,
+            user: { id: user.id, email: user.email },
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error during registration.', error: (error as Error).message });
+    }
+};
+
+// USER LOGIN
+const login = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { email, password } = req.body;
+
+        const { token, user } = await loginService(email, password);
+
+        res.status(200).json({
+            message: 'Login successful.',
+            token,
+            user: { id: user._id, email: user.email },
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error during login.', error: (error as Error).message });
+    }
+};
+
+// USER LOGOUT
+const logout = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+        const token = req.token;
+        if (token) {
+            await logoutService(token);
+        }
+
+        res.status(200).json({
+            message: 'Logout successful. Token invalidated.',
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error during logout.', error: (error as Error).message });
+    }
+};
+
+// RESET / CHANGE PASSWORD
+const changePassword = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+        const userId = req.userId!;
+        const { oldPassword, newPassword } = req.body;
+
+        await changePasswordService(userId, oldPassword, newPassword);
+
+        res.status(200).json({
+            message: 'Password changed successfully.',
+        });
+    } catch (error) {
+        const statusCode = (error as any).statusCode || 500;
+        res.status(statusCode).json({ message: error instanceof Error ? error.message : 'Server error.' });
+    }
+};
+
+export { register, login, logout, changePassword };
