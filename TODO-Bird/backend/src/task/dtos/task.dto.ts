@@ -1,0 +1,51 @@
+import { ITask, TaskPriority } from '../modules/Task';
+
+// Light DTO for List Views
+export interface LightTaskDTO {
+  id: string;
+  title: string;
+  deadline: Date;
+  priority: TaskPriority;
+  is_completed: boolean;
+  is_deleted: boolean;
+}
+
+// Heavy DTO for Detailed Views
+export interface HeavyTaskDTO {
+  id: string;
+  userId: string;
+  title: string;
+  description: string;
+  assigned_at: Date;
+  deadline: Date;
+  priority: TaskPriority;
+  is_completed: boolean;
+  is_deleted: boolean;
+  completed_at?: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export const toLightTaskDTO = (task: ITask): LightTaskDTO => ({
+  id: task._id.toString(),
+  title: task.title,
+  deadline: task.deadline,
+  priority: task.priority,
+  is_completed: task.is_completed,
+  is_deleted: task.is_deleted,
+});
+
+export const toHeavyTaskDTO = (task: ITask): HeavyTaskDTO => ({
+  id: task._id.toString(),
+  userId: task.userId.toString(),
+  title: task.title,
+  description: task.description,
+  assigned_at: task.assigned_at,
+  deadline: task.deadline,
+  priority: task.priority,
+  is_completed: task.is_completed,
+  is_deleted: task.is_deleted,
+  completed_at: task.completed_at,
+  createdAt: task.createdAt,
+  updatedAt: task.updatedAt,
+});
