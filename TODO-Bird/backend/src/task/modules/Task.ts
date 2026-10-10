@@ -10,7 +10,6 @@ export interface ITask extends Document {
   userId: mongoose.Types.ObjectId;
   title: string;
   description: string;
-  assigned_at: Date;
   deadline: Date;
   priority: TaskPriority;
   is_completed: boolean;
@@ -25,7 +24,6 @@ const TaskSchema: Schema = new Schema(
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     title: { type: String, required: true, trim: true },
     description: { type: String, default: '', trim: true },
-    assigned_at: { type: Date, required: true, default: Date.now },
     deadline: { type: Date, required: true },
     priority: {
       type: Number,

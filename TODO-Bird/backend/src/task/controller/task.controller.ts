@@ -18,8 +18,11 @@ export const createTask = async (req: AuthenticatedRequest, res: Response): Prom
 };
 
 export const getAllTasks = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-  const isCompleted = req.query.isCompleted === 'true';
-  const tasks = await getAllTasksService(req.userId!, isCompleted);
+  // Support both isDeleted and is_deleted query parameters
+  const isDeleted = req.query.isDeleted === 'true' || req.query.is_deleted === 'true';
+  const sortby = (req.query.sortby as string) || "deadline";
+  
+  const tasks = await getAllTasksService(req.userId!, sortby, isDeleted);
   res.status(200).json(tasks);
 };
 

@@ -36,7 +36,6 @@ router.use(authenticateToken);
  *             properties:
  *               title: { type: string, example: "Build React Native UI" }
  *               description: { type: string, example: "Setup components for auth and task list" }
- *               assigned_at: { type: string, format: date-time }
  *               deadline: { type: string, format: date-time, example: "2026-10-11T18:00:00.000Z" }
  *               priority: { type: integer, enum: [0, 1, 2], example: 2, description: "0: Low, 1: Mid, 2: High" }
  */

@@ -7,28 +7,45 @@ export async function createTaskService(
     data: {
         title: string;
         description?: string;
-        assigned_at?: Date;
         deadline: Date;
         priority?: TaskPriority;
     }
 ): Promise<HeavyTaskDTO> {
-    if (!data.title || !data.deadline) {
-        throw new AppError('Title and deadline are required fields.', 400);
+
+    if (data.title === undefined || data.title === null) {
+        throw new AppError('Title Invalid.', 400);
     }
 
-    if (data.title === undefined) throw new AppError('Title Invalid.', 400);
-    if (data.description === undefined) throw new AppError('Description Invalid.', 400);
-    if (data.assigned_at === undefined) throw new AppError('Assigned Invalid.', 400);
-    if (data.deadline === undefined) throw new AppError('Deadline Invalid.', 400);
-    if(data.deadline.getTime() < Date.now()) throw new AppError('Deadline cannot be set in the past.', 400);
-    if (data.priority === undefined) throw new AppError('Priority Invalid.', 400);
-    if ( typeof data.priority !== 'number' || (data.priority !== 1 && data.priority !== 2 && data.priority !== 0)) throw new AppError('Invalid Priority.', 400);
+    if (data.description === undefined || data.description === null) {
+        throw new AppError('Description Invalid.', 400);
+    }
+
+    if (data.deadline === undefined || data.deadline === null) {
+        throw new AppError('Deadline Invalid.', 400);
+    }
+
+    // Convert string/date input safely to a Date object
+    const deadlineDate = new Date(data.deadline);
+    if (isNaN(deadlineDate.getTime())) {
+        throw new AppError('Deadline Invalid.', 400);
+    }
+
+    if (deadlineDate.getTime() < Date.now()) {
+        throw new AppError('Deadline cannot be set in the past.', 400);
+    }
+
+    if (
+        data.priority === undefined ||
+        typeof data.priority !== 'number' ||
+        ![0, 1, 2].includes(data.priority)
+    ) {
+        throw new AppError('Invalid Priority.', 400);
+    }
 
     const newTask = await Task.create({
         userId,
         title: data.title,
         description: data.description || '',
-        assigned_at: data.assigned_at ? new Date(data.assigned_at) : new Date(),
         deadline: new Date(data.deadline),
         priority: data.priority ?? TaskPriority.MID,
         is_completed: false,
@@ -38,8 +55,8 @@ export async function createTaskService(
     return toHeavyTaskDTO(newTask);
 }
 
-export async function getAllTasksService(userId: string, isCompleted: boolean): Promise<LightTaskDTO[]> {
-    const tasks = await Task.find({ userId, is_deleted: false, is_completed: isCompleted }).sort({ deadline: 1 });
+export async function getAllTasksService(userId: string, sortby: string, isDeleted: boolean): Promise<LightTaskDTO[]> {
+    const tasks = await Task.find({ userId, is_deleted: isDeleted }).sort({ [sortby]: 1 });
     return tasks.map(toLightTaskDTO);
 }
 
@@ -52,7 +69,7 @@ export async function getTaskByIdService(userId: string, taskId: string): Promis
 }
 
 export async function markTaskCompletedService(userId: string, taskId: string): Promise<HeavyTaskDTO> {
-    const task = await Task.findOne({ _id: taskId, userId });
+    const task = await Task.findOne({ _id: taskId, userId, is_deleted: false });
     if (!task) {
         throw new AppError('Task not found.', 404);
     }
@@ -74,12 +91,11 @@ export async function updateTaskService(
     data: {
         title?: string;
         description?: string;
-        assigned_at?: Date;
-        deadline?: Date;
+        deadline?: string | Date;
         priority?: TaskPriority;
     }
 ): Promise<HeavyTaskDTO> {
-    const task = await Task.findOne({ _id: taskId, userId });
+    const task = await Task.findOne({ _id: taskId, userId, is_deleted: false, is_completed: false });
     if (!task) {
         throw new AppError('Task not found.', 404);
     }
@@ -92,18 +108,25 @@ export async function updateTaskService(
         throw new AppError('Cannot update a soft-deleted task. Restore it first.', 400);
     }
 
-    if (data.title === undefined) throw new AppError('Title Invalid.', 400);
-    if (data.description === undefined) throw new AppError('Description Invalid.', 400);
-    if (data.assigned_at === undefined) throw new AppError('Assigned Invalid.', 400);
-    if (data.deadline === undefined) throw new AppError('Deadline Invalid.', 400);
-    if(data.deadline.getTime() < Date.now()) throw new AppError('Deadline cannot be set in the past.', 400);
-    if (data.priority === undefined) throw new AppError('Priority Invalid.', 400);
-    if ( typeof data.priority !== 'number' || (data.priority !== 1 && data.priority !== 2 && data.priority !== 0)) throw new AppError('Invalid Priority.', 400);
-    task.title = data.title;
-    task.description = data.description;
-    task.assigned_at = new Date(data.assigned_at);
-    task.priority = data.priority;
-    task.deadline = new Date(data.deadline);
+    if (data.title !== undefined) task.title = data.title;
+    if (data.description !== undefined) task.description = data.description;
+    if (data.priority !== undefined) {
+        if (typeof data.priority !== 'number' || ![0, 1, 2].includes(data.priority)) {
+            throw new AppError('Invalid Priority.', 400);
+        }
+        task.priority = data.priority;
+    }
+
+    if (data.deadline !== undefined) {
+        const deadlineDate = new Date(data.deadline);
+        if (isNaN(deadlineDate.getTime())) {
+            throw new AppError('Deadline Invalid.', 400);
+        }
+        if (deadlineDate.getTime() < Date.now()) {
+            throw new AppError('Deadline cannot be set in the past.', 400);
+        }
+        task.deadline = deadlineDate;
+    }
 
     await task.save();
     return toHeavyTaskDTO(task);
