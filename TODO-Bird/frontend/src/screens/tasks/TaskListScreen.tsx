@@ -12,9 +12,14 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTaskStore } from '../../store/useTaskStore';
 import { TaskCard } from '../../components/TaskCard';
+import { useAuthStore } from '../../store/useAuthStore';
+import { ChangePasswordModal } from '../../components/ChangePasswordModal';
 
 export const TaskListScreen = ({ navigation }: any) => {
   const { tasks, isLoading, fetchTasks, markCompleted } = useTaskStore();
+  const logout = useAuthStore((s) => s.logout);
+
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
 
   const [showChooseMenu, setShowChooseMenu] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -36,11 +41,16 @@ export const TaskListScreen = ({ navigation }: any) => {
   });
 
   const handleRefresh = async () => {
-  await fetchTasks("priority", false);
+    await fetchTasks("priority", false);
   };
 
   const onRefreshHandler = () => {
     handleRefresh();
+  };
+
+  const handleLogout = async () => {
+    setShowChooseMenu(false);
+    await logout();
   };
 
   return (
@@ -125,12 +135,31 @@ export const TaskListScreen = ({ navigation }: any) => {
               >
                 <Text style={styles.chooseBtnText}>Recycle Bin</Text>
               </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.chooseBtn, styles.logoutBtn]}
+                onPress={handleLogout}
+              >
+                <Text style={styles.logoutText}>Logout</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.chooseBtn}
+                onPress={() => {
+                  setShowChooseMenu(false);
+                  setShowPasswordModal(true);
+                }}
+              >
+                <Text style={styles.chooseBtnText}>Change Password</Text>
+              </TouchableOpacity>
+
               <TouchableOpacity
                 style={[styles.chooseBtn, styles.leaveBtn]}
                 onPress={() => setShowChooseMenu(false)}
               >
-                <Text style={styles.leaveText}>&lt;Leave This for now&gt;</Text>
+                <Text style={styles.leaveText}>{'=>'}</Text>
               </TouchableOpacity>
+
             </View>
           </TouchableOpacity>
         </Modal>
@@ -212,6 +241,10 @@ export const TaskListScreen = ({ navigation }: any) => {
             </View>
           </View>
         </Modal>
+        <ChangePasswordModal
+          visible={showPasswordModal}
+          onClose={() => setShowPasswordModal(false)}
+        />
       </View>
     </SafeAreaView>
   );
@@ -415,5 +448,14 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '800',
     fontSize: 10,
+  },
+  logoutBtn: {
+    borderColor: 'rgba(239, 68, 68, 0.4)',
+    backgroundColor: 'rgba(239, 68, 68, 0.08)',
+  },
+  logoutText: {
+    color: '#EF4444',
+    fontWeight: '800',
+    fontSize: 12,
   },
 });

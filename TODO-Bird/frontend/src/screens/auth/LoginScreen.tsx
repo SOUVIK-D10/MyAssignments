@@ -16,7 +16,11 @@ export const LoginScreen = ({ navigation }: any) => {
       const res = await authApi.login(email, password);
       await loginStore(res.data.token);
     } catch (err: any) {
-      Alert.alert('Authentication Failed', err.response?.data?.message || 'Invalid credentials');
+      if (err.response?.status === 401) {
+        Alert.alert('Access Denied', 'Invalid email or password. Please try again.');
+      } else {
+        Alert.alert('Authentication Failed', err.response?.data?.message || 'Something went wrong.');
+      }
     } finally {
       setLoading(false);
     }

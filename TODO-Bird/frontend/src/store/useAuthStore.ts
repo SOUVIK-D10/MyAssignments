@@ -25,7 +25,6 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       await authApi.logout();
     } catch {
-      // Ignore network errors during local teardown
     } finally {
       await SecureStore.deleteItemAsync('userToken');
       set({ token: null, isAuthenticated: false });

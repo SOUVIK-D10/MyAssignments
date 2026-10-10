@@ -18,7 +18,7 @@ export const AppNavigator = () => {
   return (
     <Stack.Navigator
       screenOptions={{
-        headerShown: false, // Custom headers built in-screen for precise layout control
+        headerShown: false, 
         contentStyle: { backgroundColor: '#0A0B10' },
         animation: 'slide_from_right',
       }}
