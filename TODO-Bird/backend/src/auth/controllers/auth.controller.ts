@@ -1,5 +1,4 @@
 import { Request, Response } from 'express';
-
 import { changePasswordService, loginService, logoutService, registerService } from '../services/auth.service';
 import { AuthenticatedRequest } from '../../middleware/auth.middleware';
 
@@ -7,7 +6,6 @@ import { AuthenticatedRequest } from '../../middleware/auth.middleware';
 const register = async (req: Request, res: Response): Promise<void> => {
     try {
         const { email, password } = req.body;
-
         const { token, user } = await registerService(email, password);
 
         res.status(201).json({
@@ -16,7 +14,8 @@ const register = async (req: Request, res: Response): Promise<void> => {
             user: { id: user.id, email: user.email },
         });
     } catch (error) {
-        res.status(500).json({ message: 'Server error during registration.', error: (error as Error).message });
+        const statusCode = (error as any).statusCode || 500;
+        res.status(statusCode).json({ message: error instanceof Error ? error.message : 'Server error.' });
     }
 };
 
@@ -24,7 +23,6 @@ const register = async (req: Request, res: Response): Promise<void> => {
 const login = async (req: Request, res: Response): Promise<void> => {
     try {
         const { email, password } = req.body;
-
         const { token, user } = await loginService(email, password);
 
         res.status(200).json({
@@ -33,7 +31,8 @@ const login = async (req: Request, res: Response): Promise<void> => {
             user: { id: user._id, email: user.email },
         });
     } catch (error) {
-        res.status(500).json({ message: 'Server error during login.', error: (error as Error).message });
+        const statusCode = (error as any).statusCode || 500;
+        res.status(statusCode).json({ message: error instanceof Error ? error.message : 'Server error.' });
     }
 };
 
@@ -49,7 +48,8 @@ const logout = async (req: AuthenticatedRequest, res: Response): Promise<void> =
             message: 'Logout successful. Token invalidated.',
         });
     } catch (error) {
-        res.status(500).json({ message: 'Server error during logout.', error: (error as Error).message });
+        const statusCode = (error as any).statusCode || 500;
+        res.status(statusCode).json({ message: error instanceof Error ? error.message : 'Server error.' });
     }
 };
 

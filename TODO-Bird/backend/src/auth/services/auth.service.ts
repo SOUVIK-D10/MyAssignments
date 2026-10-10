@@ -6,11 +6,11 @@ import TokenBlacklist from '../modules/TokenBlacklist';
 
 async function registerService(email: string, password: string): Promise<any> {
     if (!email || !password) {
-        throw new Error('Email and password are required.');
+        throw new AppError('Email and password are required.', 400);
     }
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-        throw new Error('User with this email already exists.');
+        throw new AppError('User with this email already exists.', 400);
     }
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
@@ -25,15 +25,15 @@ async function registerService(email: string, password: string): Promise<any> {
 
 async function loginService(email: string, password: string): Promise<any> {
     if (!email || !password) {
-        throw new Error('Email and password are required.');
+        throw new AppError('Email and password are required.', 400);
     }
     const user = await User.findOne({ email });
     if (!user) {
-        throw new Error('Invalid email or password.');
+        throw new AppError('Invalid email or password.', 401);
     }
     const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) {
-        throw new Error('Invalid email or password.');
+        throw new AppError('Invalid email or password.', 401);
     }
     const token = jwt.sign(
         { userId: user._id, email: user.email },
@@ -65,16 +65,14 @@ async function changePasswordService(
 
   const user = await User.findById(userId);
   if (!user) {
-    throw new AppError('User not found.', 440);
+    throw new AppError('User not found.', 404);
   }
 
-  // Verify old password against DB passwordHash
   const isMatch = await bcrypt.compare(oldPasswordInput, user.passwordHash);
   if (!isMatch) {
     throw new AppError('Incorrect current password.', 401);
   }
 
-  // Hash new password and update DB
   const salt = await bcrypt.genSalt(10);
   user.passwordHash = await bcrypt.hash(newPasswordInput, salt);
   await user.save();
