@@ -10,27 +10,30 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useTaskStore } from '../../store/useTaskStore';
+import { useTaskStore, TaskCategory } from '../../store/useTaskStore';
 
 export const TaskDetailScreen = ({ route, navigation }: any) => {
-  const priorityWrap = [
-    'LOW',
-    'MID',
-    'HIGH',
-  ];
-  const priorityWrapColor = [
-    'white',
-    'blue',
-    'yellow',
-  ];
+  const priorityWrap = ['LOW', 'MID', 'HIGH'];
+  const categories: TaskCategory[] = ['WORK', 'PERSONAL', 'ACADEMIC', 'HEALTH', 'SYSTEM'];
+
   const { id } = route.params;
-  const { selectedTask, fetchTaskById, addToBin, markCompleted, updateTask, isLoading, removeFromBin, fetchTasks, restoreFromBin } =
-    useTaskStore();
+  const {
+    selectedTask,
+    fetchTaskById,
+    addToBin,
+    markCompleted,
+    updateTask,
+    isLoading,
+    removeFromBin,
+    fetchTasks,
+    restoreFromBin,
+  } = useTaskStore();
 
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState('');
   const [editDesc, setEditDesc] = useState('');
   const [editPriority, setEditPriority] = useState(1);
+  const [editCategory, setEditCategory] = useState<TaskCategory>('PERSONAL');
   const [editDeadline, setEditDeadline] = useState(new Date());
 
   const [showPicker, setShowPicker] = useState(false);
@@ -45,6 +48,7 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
       setEditTitle(selectedTask.title);
       setEditDesc(selectedTask.description || '');
       setEditPriority(selectedTask.priority);
+      setEditCategory(selectedTask.category || 'PERSONAL');
       if (selectedTask.deadline) {
         setEditDeadline(new Date(selectedTask.deadline));
       }
@@ -77,6 +81,7 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
         title: editTitle,
         description: editDesc,
         priority: editPriority,
+        category: editCategory,
         deadline: editDeadline.toISOString(),
       });
       setIsEditing(false);
@@ -111,13 +116,13 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
           style: 'destructive',
           onPress: async () => {
             await addToBin(id);
-            fetchTasks("deadline", true);
+            fetchTasks('deadline', true);
             navigation.goBack();
           },
         },
       ]
     );
-  }
+  };
 
   const handleHardDelete = async () => {
     Alert.alert(
@@ -130,7 +135,7 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
           style: 'destructive',
           onPress: async () => {
             await removeFromBin(id);
-            fetchTasks("deadline", true);
+            fetchTasks('deadline', true);
             navigation.goBack();
           },
         },
@@ -144,7 +149,7 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
           <Text style={styles.backText}>← BACK</Text>
         </TouchableOpacity>
-        <Text style={styles.topBarTitle}>{!isEditing ? 'Details':'Editing'}</Text>
+        <Text style={styles.topBarTitle}>{!isEditing ? 'Details' : 'Editing'}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -177,6 +182,39 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
             <Text style={styles.descText}>
               {selectedTask.description || 'No description provided.'}
             </Text>
+          </View>
+        )}
+
+        {/* Category Selection / View */}
+        {isEditing ? (
+          <View style={styles.box}>
+            <Text style={styles.boxLabel}>CATEGORY</Text>
+            <View style={styles.categoryRow}>
+              {categories.map((cat) => (
+                <TouchableOpacity
+                  key={cat}
+                  style={[
+                    styles.categoryBtn,
+                    editCategory === cat && styles.categoryBtnActive,
+                  ]}
+                  onPress={() => setEditCategory(cat)}
+                >
+                  <Text
+                    style={[
+                      styles.categoryBtnText,
+                      editCategory === cat && styles.categoryBtnTextActive,
+                    ]}
+                  >
+                    {cat}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        ) : (
+          <View style={styles.box}>
+            <Text style={styles.boxLabel}>CATEGORY</Text>
+            <Text style={styles.valueText}>{selectedTask.category || 'PERSONAL'}</Text>
           </View>
         )}
 
@@ -247,7 +285,7 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
             mode={pickerMode}
             is24Hour={true}
             display="default"
-            onChange={handleDateChange}
+            onValueChange={handleDateChange}
           />
         )}
 
@@ -278,23 +316,22 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
 
         {/* Bottom Action Controls */}
         <View style={styles.bottomBar}>
-          { !isEditing && 
-            (selectedTask.is_deleted || !selectedTask.completed_at) 
-            && (
-            <TouchableOpacity
-              style={[
-                styles.mainActionBtn,
-                selectedTask.is_completed ? styles.redBtn : styles.greenBtn,
-              ]}
-              onPress={handleAction}
-            >
-              <Text style={styles.actionBtnText}>
-                {selectedTask.is_deleted
-                  ? '♻️ RESTORE'
-                  : '✓ MARK COMPLETE'}
-              </Text>
-            </TouchableOpacity>
-          )}
+          {!isEditing &&
+            (selectedTask.is_deleted || !selectedTask.completed_at) && (
+              <TouchableOpacity
+                style={[
+                  styles.mainActionBtn,
+                  selectedTask.is_completed ? styles.redBtn : styles.greenBtn,
+                ]}
+                onPress={handleAction}
+              >
+                <Text style={styles.actionBtnText}>
+                  {selectedTask.is_deleted
+                    ? '♻️ RESTORE'
+                    : '✓ MARK COMPLETE'}
+                </Text>
+              </TouchableOpacity>
+            )}
 
           {!selectedTask?.is_completed && !selectedTask?.is_deleted && (
             <View style={styles.rightActionGroup}>
@@ -453,14 +490,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginTop: 20,
-    gap: 10, // Added gap to create explicit spacing between the buttons
+    gap: 10,
   },
   mainActionBtn: {
     flex: 1,
     paddingVertical: 12,
     borderRadius: 24,
     alignItems: 'center',
-    marginRight: 0, // Reset old rigid marginRight to let flex & gap handle it cleanly
+    marginRight: 0,
   },
   greenBtn: {
     backgroundColor: '#22C55E',
@@ -517,15 +554,41 @@ const styles = StyleSheet.create({
   priorityTextActive: {
     color: '#3B82F6',
   },
+  categoryRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 4,
+  },
+  categoryBtn: {
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: '#1F2433',
+    borderRadius: 6,
+    backgroundColor: '#0A0B10',
+  },
+  categoryBtnActive: {
+    borderColor: '#3B82F6',
+    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+  },
+  categoryBtnText: {
+    color: '#6B7280',
+    fontWeight: '700',
+    fontSize: 10,
+  },
+  categoryBtnTextActive: {
+    color: '#3B82F6',
+  },
   rightActionGroup: {
     flexDirection: 'row',
-    gap: 8, 
+    gap: 8,
   },
   cancelBtn: {
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: '#381414', 
+    backgroundColor: '#381414',
     borderColor: '#592525',
     borderWidth: 1,
     justifyContent: 'center',

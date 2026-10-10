@@ -78,4 +78,18 @@ async function changePasswordService(
   await user.save();
 }
 
-export { registerService, loginService, logoutService, changePasswordService };
+async function updatePushTokenService(userId: string, pushToken: string): Promise<void> {
+    if (!pushToken) {
+        throw new AppError('Push token is required.', 400);
+    }
+    const user = await User.findByIdAndUpdate(
+        userId, 
+        { pushToken }, 
+        { new: true, runValidators: true }
+    );
+    if (!user) {
+        throw new AppError('User not found.', 404);
+    }
+}
+
+export { registerService, loginService, logoutService, changePasswordService, updatePushTokenService };

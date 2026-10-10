@@ -8,6 +8,7 @@ import { swaggerSpec } from './config/swagger';
 import { globalErrorHandler } from './middleware/errorHandler.middleware';
 import { AppError } from './utils/AppError';
 import { taskRouter } from './task/router/task.router';
+import { initNotificationCron } from './jobs/notification.service';
 
 dotenv.config();
 
@@ -42,4 +43,10 @@ connectDB().then(() => {
     console.log(`[Server] Running on http://localhost:${PORT}`);
     console.log(`[Swagger] Docs live at http://localhost:${PORT}/api-docs`);
   });
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  initNotificationCron();
+  console.log('Notification cron daemon initialized.');
 });

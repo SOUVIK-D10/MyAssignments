@@ -1,4 +1,4 @@
-import { ITask, TaskPriority } from '../modules/Task';
+import { ITask, TaskPriority, TaskCategory } from '../modules/Task';
 
 // Light DTO for List Views
 export interface LightTaskDTO {
@@ -6,6 +6,7 @@ export interface LightTaskDTO {
   title: string;
   deadline: Date;
   priority: TaskPriority;
+  category: TaskCategory;
   is_completed: boolean;
   is_deleted: boolean;
 }
@@ -17,6 +18,7 @@ export interface HeavyTaskDTO {
   description: string;
   deadline: Date;
   priority: TaskPriority;
+  category: TaskCategory;
   is_completed: boolean;
   is_deleted: boolean;
   completed_at?: Date | null;
@@ -29,6 +31,7 @@ export const toLightTaskDTO = (task: ITask): LightTaskDTO => ({
   title: task.title,
   deadline: task.deadline,
   priority: task.priority,
+  category: task.category,
   is_completed: task.is_completed,
   is_deleted: task.is_deleted,
 });
@@ -39,6 +42,7 @@ export const toHeavyTaskDTO = (task: ITask): HeavyTaskDTO => ({
   description: task.description,
   deadline: task.deadline,
   priority: task.priority,
+  category: task.category,
   is_completed: task.is_completed,
   is_deleted: task.is_deleted,
   completed_at: task.completed_at,

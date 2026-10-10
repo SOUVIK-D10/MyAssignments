@@ -16,7 +16,7 @@ export const TaskCard: React.FC<Props> = ({ task, onPress, onComplete }) => {
     minute: '2-digit',
   });
 
-  // Border Color Rules based on diagram specification
+  // Border Color Rules based on priority / status
   const getBorderColor = () => {
     if (task.is_completed) return '#22C55E'; // GREEN if completed
     switch (task.priority) {
@@ -26,7 +26,7 @@ export const TaskCard: React.FC<Props> = ({ task, onPress, onComplete }) => {
         return '#EAB308'; // YELLOW for Priority 2
       case 0:
       default:
-        return '#1F2433'; // Transparent/Default Slate for Priority 0
+        return '#1F2433'; // Slate for Priority 0
     }
   };
 
@@ -37,9 +37,16 @@ export const TaskCard: React.FC<Props> = ({ task, onPress, onComplete }) => {
       onPress={onPress}
     >
       <View style={styles.topRow}>
-        <Text style={styles.title} numberOfLines={1}>
-          {task.title}
-        </Text>
+        <View style={styles.titleContainer}>
+          <Text style={styles.title} numberOfLines={1}>
+            {task.title}
+          </Text>
+          {task.category && (
+            <View style={styles.categoryBadge}>
+              <Text style={styles.categoryText}>{task.category}</Text>
+            </View>
+          )}
+        </View>
         <Text style={styles.deadline}>{formattedDeadline}</Text>
       </View>
 
@@ -71,15 +78,33 @@ const styles = StyleSheet.create({
   topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: 10,
+  },
+  titleContainer: {
+    flex: 1,
+    marginRight: 8,
   },
   title: {
     color: '#F3F4F6',
     fontSize: 15,
     fontWeight: '700',
-    flex: 1,
-    marginRight: 8,
+    marginBottom: 4,
+  },
+  categoryBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(59, 130, 246, 0.12)',
+    borderColor: '#1F2433',
+    borderWidth: 1,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  categoryText: {
+    color: '#3B82F6',
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
   deadline: {
     color: '#9CA3AF',

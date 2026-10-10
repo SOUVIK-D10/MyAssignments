@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -14,38 +14,113 @@ import { useTaskStore } from '../../store/useTaskStore';
 import { TaskCard } from '../../components/TaskCard';
 import { useAuthStore } from '../../store/useAuthStore';
 import { ChangePasswordModal } from '../../components/ChangePasswordModal';
+import {
+  FilterModal,
+  CompletionFilter,
+  PriorityFilter,
+  CategoryFilter,
+  SortField,
+  SortOrder,
+} from '../../components/FilterModel';
+import { FocusModeModal } from '../../components/FocusModeModal';
 
 export const TaskListScreen = ({ navigation }: any) => {
   const { tasks, isLoading, fetchTasks, markCompleted } = useTaskStore();
   const logout = useAuthStore((s) => s.logout);
 
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showFocusModal, setShowFocusModal] = useState(false);
 
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showChooseMenu, setShowChooseMenu] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
 
-  const [completedFilter, setCompletedFilter] = useState<'ALL' | 'COMPLETED' | 'PENDING'>('PENDING');
-  const [priorityFilter, setPriorityFilter] = useState<number | 'ALL'>('ALL');
+  // Filter and Sort States
+  const [searchQuery, setSearchQuery] = useState('');
+  const [completedFilter, setCompletedFilter] = useState<CompletionFilter>('PENDING');
+  const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>('ALL');
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('ALL');
+  const [sortField, setSortField] = useState<SortField>('deadline');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
 
   useEffect(() => {
     fetchTasks("priority", false);
   }, []);
 
-  const isFilterActive = completedFilter !== 'PENDING' || priorityFilter !== 'ALL';
+  const isFilterActive =
+    completedFilter !== 'PENDING' ||
+    priorityFilter !== 'ALL' ||
+    categoryFilter !== 'ALL' ||
+    searchQuery.trim() !== '' ||
+    sortField !== 'deadline' ||
+    sortOrder !== 'asc';
 
-  const filteredTasks = tasks.filter((task) => {
-    if (completedFilter === 'COMPLETED' && !task.is_completed) return false;
-    if (completedFilter === 'PENDING' && task.is_completed) return false;
-    if (priorityFilter !== 'ALL' && task.priority !== priorityFilter) return false;
-    return true;
-  });
+  // Client-side filtering & multi-level sorting logic
+  const filteredAndSortedTasks = useMemo(() => {
+    return tasks
+      .filter((task) => {
+        // Search Filter
+        if (
+          searchQuery &&
+          !task.title.toLowerCase().includes(searchQuery.toLowerCase())
+        ) {
+          return false;
+        }
+
+        // Completion Status Filter
+        if (completedFilter === 'COMPLETED' && !task.is_completed) return false;
+        if (completedFilter === 'PENDING' && task.is_completed) return false;
+
+        // Priority Filter
+        if (priorityFilter !== 'ALL' && task.priority !== priorityFilter) return false;
+
+        // Category Filter
+        if (categoryFilter !== 'ALL' && task.category !== categoryFilter) return false;
+
+        return true;
+      })
+      .sort((a, b) => {
+        let diff = 0;
+
+        // 1. Primary Sort Criteria
+        if (sortField === 'deadline') {
+          diff = new Date(a.deadline || 0).getTime() - new Date(b.deadline || 0).getTime();
+          // Tie-breaker: Default sort by Category
+          if (diff === 0) {
+            diff = (a.category || '').localeCompare(b.category || '');
+          }
+        } else if (sortField === 'priority') {
+          diff = a.priority - b.priority;
+          // Tie-breaker: Default sort by Category
+          if (diff === 0) {
+            diff = (a.category || '').localeCompare(b.category || '');
+          }
+        } else if (sortField === 'category') {
+          diff = (a.category || '').localeCompare(b.category || '');
+          // Tie-breaker: Default sort by Priority
+          if (diff === 0) {
+            diff = a.priority - b.priority;
+          }
+        } else if (sortField === 'title') {
+          diff = a.title.localeCompare(b.title);
+        }
+
+        // Apply Order Direction
+        return sortOrder === 'asc' ? diff : -diff;
+      });
+  }, [tasks, searchQuery, completedFilter, priorityFilter, categoryFilter, sortField, sortOrder]);
+
+  const handleResetFilters = () => {
+    setSearchQuery('');
+    setCompletedFilter('ALL');
+    setPriorityFilter('ALL');
+    setCategoryFilter('ALL');
+    setSortField('deadline');
+    setSortOrder('asc');
+    setShowFilterModal(false);
+  };
 
   const handleRefresh = async () => {
     await fetchTasks("priority", false);
-  };
-
-  const onRefreshHandler = () => {
-    handleRefresh();
   };
 
   const handleLogout = async () => {
@@ -66,6 +141,13 @@ export const TaskListScreen = ({ navigation }: any) => {
           <Text style={styles.title}>TASK LIST</Text>
 
           <TouchableOpacity
+            style={styles.focusHeaderBtn}
+            onPress={() => setShowFocusModal(true)}
+          >
+            <Text style={styles.focusHeaderBtnText}>⚡ FOCUS</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
             style={[styles.funnelBtn, isFilterActive && styles.funnelActiveBtn]}
             onPress={() => setShowFilterModal(true)}
           >
@@ -78,7 +160,7 @@ export const TaskListScreen = ({ navigation }: any) => {
         {/* Full-Height Scrollable Task List */}
         <View style={styles.listWrapper}>
           <FlatList
-            data={filteredTasks}
+            data={filteredAndSortedTasks}
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.listContent}
             renderItem={({ item }) => (
@@ -89,12 +171,10 @@ export const TaskListScreen = ({ navigation }: any) => {
               />
             )}
             refreshControl={
-              //  Fixed
               <RefreshControl
                 refreshing={isLoading}
-                onRefresh={() => { handleRefresh(); }}
+                onRefresh={handleRefresh}
               />
-
             }
             ListEmptyComponent={
               <Text style={styles.emptyText}>No objectives found.</Text>
@@ -159,91 +239,35 @@ export const TaskListScreen = ({ navigation }: any) => {
               >
                 <Text style={styles.leaveText}>{'=>'}</Text>
               </TouchableOpacity>
-
             </View>
           </TouchableOpacity>
         </Modal>
 
-        {/* Filter Form Modal */}
-        <Modal visible={showFilterModal} transparent animationType="slide">
-          <View style={styles.modalOverlay}>
-            <View style={styles.filterBox}>
-              <Text style={styles.filterTitle}>FILTER FORM</Text>
-
-              <Text style={styles.filterLabel}>COMPLETION STATUS</Text>
-              <View style={styles.row}>
-                {(['ALL', 'PENDING', 'COMPLETED'] as const).map((status) => (
-                  <TouchableOpacity
-                    key={status}
-                    style={[
-                      styles.filterChip,
-                      completedFilter === status && styles.filterChipActive,
-                    ]}
-                    onPress={() => setCompletedFilter(status)}
-                  >
-                    <Text
-                      style={[
-                        styles.chipText,
-                        completedFilter === status && styles.chipTextActive,
-                      ]}
-                    >
-                      {status}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              <Text style={styles.filterLabel}>PRIORITY LEVEL</Text>
-              <View style={styles.row}>
-                {[
-                  { key: 'ALL', label: 'All' },
-                  { key: 0, label: '0 (Low)' },
-                  { key: 1, label: '1 (Mid)' },
-                  { key: 2, label: '2 (High)' },
-                ].map((p) => (
-                  <TouchableOpacity
-                    key={p.key.toString()}
-                    style={[
-                      styles.filterChip,
-                      priorityFilter === p.key && styles.filterChipActive,
-                    ]}
-                    onPress={() => setPriorityFilter(p.key as any)}
-                  >
-                    <Text
-                      style={[
-                        styles.chipText,
-                        priorityFilter === p.key && styles.chipTextActive,
-                      ]}
-                    >
-                      {p.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              <TouchableOpacity
-                style={styles.deactivateBtn}
-                onPress={() => {
-                  setCompletedFilter('ALL');
-                  setPriorityFilter('ALL');
-                  setShowFilterModal(false);
-                }}
-              >
-                <Text style={styles.deactivateText}>DEACTIVATE FILTERS</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.closeModalBtn}
-                onPress={() => setShowFilterModal(false)}
-              >
-                <Text style={styles.closeModalText}>APPLY & CLOSE</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
+        {/* Standalone Filter & Sort Modal */}
+        <FilterModal
+          visible={showFilterModal}
+          onClose={() => setShowFilterModal(false)}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          completedFilter={completedFilter}
+          setCompletedFilter={setCompletedFilter}
+          priorityFilter={priorityFilter}
+          setPriorityFilter={setPriorityFilter}
+          categoryFilter={categoryFilter}
+          setCategoryFilter={setCategoryFilter}
+          sortField={sortField}
+          setSortField={setSortField}
+          sortOrder={sortOrder}
+          setSortOrder={setSortOrder}
+          onReset={handleResetFilters}
+        />
         <ChangePasswordModal
           visible={showPasswordModal}
           onClose={() => setShowPasswordModal(false)}
+        />
+        <FocusModeModal
+          visible={showFocusModal}
+          onClose={() => setShowFocusModal(false)}
         />
       </View>
     </SafeAreaView>
@@ -377,78 +401,6 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     fontSize: 11,
   },
-  filterBox: {
-    backgroundColor: '#141722',
-    width: '88%',
-    borderRadius: 10,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#1F2433',
-  },
-  filterTitle: {
-    color: '#F3F4F6',
-    fontSize: 13,
-    fontWeight: '900',
-    letterSpacing: 1,
-    marginBottom: 12,
-  },
-  filterLabel: {
-    color: '#6B7280',
-    fontSize: 9,
-    fontWeight: '700',
-    marginBottom: 6,
-    marginTop: 8,
-  },
-  row: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-  },
-  filterChip: {
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: '#1F2433',
-    backgroundColor: '#0A0B10',
-  },
-  filterChipActive: {
-    borderColor: '#3B82F6',
-    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-  },
-  chipText: {
-    color: '#6B7280',
-    fontSize: 10,
-  },
-  chipTextActive: {
-    color: '#3B82F6',
-    fontWeight: '700',
-  },
-  deactivateBtn: {
-    borderWidth: 1,
-    borderColor: '#EF4444',
-    padding: 8,
-    borderRadius: 6,
-    alignItems: 'center',
-    marginTop: 16,
-  },
-  deactivateText: {
-    color: '#EF4444',
-    fontWeight: '800',
-    fontSize: 10,
-  },
-  closeModalBtn: {
-    backgroundColor: '#3B82F6',
-    padding: 8,
-    borderRadius: 6,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  closeModalText: {
-    color: '#FFFFFF',
-    fontWeight: '800',
-    fontSize: 10,
-  },
   logoutBtn: {
     borderColor: 'rgba(239, 68, 68, 0.4)',
     backgroundColor: 'rgba(239, 68, 68, 0.08)',
@@ -457,5 +409,19 @@ const styles = StyleSheet.create({
     color: '#EF4444',
     fontWeight: '800',
     fontSize: 12,
+  },
+  focusHeaderBtn: {
+    backgroundColor: '#141722',
+    borderWidth: 1,
+    borderColor: '#3B82F6',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  focusHeaderBtnText: {
+    color: '#3B82F6',
+    fontWeight: '800',
+    fontSize: 11,
+    letterSpacing: 0.5,
   },
 });

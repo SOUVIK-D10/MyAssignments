@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { changePasswordService, loginService, logoutService, registerService } from '../services/auth.service';
+import { changePasswordService, loginService, logoutService, registerService, updatePushTokenService } from '../services/auth.service';
 import { AuthenticatedRequest } from '../../middleware/auth.middleware';
 
 // USER REGISTRATION
@@ -70,4 +70,22 @@ const changePassword = async (req: AuthenticatedRequest, res: Response): Promise
     }
 };
 
-export { register, login, logout, changePassword };
+const updatePushToken = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+        const userId = req.userId!;
+        const { pushToken } = req.body;
+
+        await updatePushTokenService(userId, pushToken);
+
+        res.status(200).json({
+            message: 'Push token registered successfully.',
+        });
+    } catch (error) {
+        const statusCode = (error as any).statusCode || 500;
+        res.status(statusCode).json({ 
+            message: error instanceof Error ? error.message : 'Server error during push token registration.' 
+        });
+    }
+};
+
+export { register, login, logout, changePassword, updatePushToken };

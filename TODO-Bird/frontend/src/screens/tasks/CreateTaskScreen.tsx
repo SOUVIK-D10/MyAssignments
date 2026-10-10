@@ -10,12 +10,15 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useTaskStore } from '../../store/useTaskStore';
+import { useTaskStore, TaskCategory } from '../../store/useTaskStore';
 
 export const CreateTaskScreen = ({ navigation }: any) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<number>(1);
+  const [category, setCategory] = useState<TaskCategory>('PERSONAL');
+
+  const categories: TaskCategory[] = ['WORK', 'PERSONAL', 'ACADEMIC', 'HEALTH', 'SYSTEM'];
 
   // Single deadline state storing a full Date object
   const defaultDate = new Date(Date.now() + 2 * 60 * 60 * 1000);
@@ -59,9 +62,9 @@ export const CreateTaskScreen = ({ navigation }: any) => {
     const payload = {
       title: title.trim(),
       description: description.trim(),
-      assigned_at: new Date().toISOString(),
       deadline: deadline.toISOString(),
       priority: priority,
+      category: category,
     };
 
     try {
@@ -103,6 +106,30 @@ export const CreateTaskScreen = ({ navigation }: any) => {
           onChangeText={setDescription}
         />
 
+        {/* Category Selection */}
+        <Text style={styles.label}>CATEGORY</Text>
+        <View style={styles.categoryRow}>
+          {categories.map((cat) => (
+            <TouchableOpacity
+              key={cat}
+              style={[
+                styles.categoryBtn,
+                category === cat && styles.categoryBtnActive,
+              ]}
+              onPress={() => setCategory(cat)}
+            >
+              <Text
+                style={[
+                  styles.categoryText,
+                  category === cat && styles.categoryTextActive,
+                ]}
+              >
+                {cat}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
         <Text style={styles.label}>PRIORITY</Text>
         <View style={styles.priorityRow}>
           {[
@@ -131,7 +158,7 @@ export const CreateTaskScreen = ({ navigation }: any) => {
         </View>
 
         <Text style={styles.label}>DEADLINE</Text>
-        
+
         {/* Quick Presets */}
         <View style={styles.presetsRow}>
           <TouchableOpacity style={styles.presetChip} onPress={() => setQuickDeadline(2)}>
@@ -169,7 +196,7 @@ export const CreateTaskScreen = ({ navigation }: any) => {
             mode={pickerMode}
             is24Hour={true}
             display="default"
-            onChange={handleDateChange}
+            onValueChange={handleDateChange}
           />
         )}
 
@@ -235,6 +262,32 @@ const styles = StyleSheet.create({
   textArea: {
     height: 70,
     textAlignVertical: 'top',
+  },
+  categoryRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginBottom: 14,
+  },
+  categoryBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: '#1F2433',
+    borderRadius: 6,
+    backgroundColor: '#141722',
+  },
+  categoryBtnActive: {
+    borderColor: '#3B82F6',
+    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+  },
+  categoryText: {
+    color: '#6B7280',
+    fontWeight: '700',
+    fontSize: 10,
+  },
+  categoryTextActive: {
+    color: '#3B82F6',
   },
   priorityRow: {
     flexDirection: 'row',

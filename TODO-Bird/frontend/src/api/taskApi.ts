@@ -1,10 +1,13 @@
 import axiosInstance from './axiosInstance';
 
+export type TaskCategory = 'WORK' | 'PERSONAL' | 'ACADEMIC' | 'HEALTH' | 'SYSTEM';
+
 export interface CreateTaskPayload {
   title: string;
   description?: string;
   deadline: string;
   priority: number;
+  category?: TaskCategory;
 }
 
 export interface UpdateTaskPayload {
@@ -12,13 +15,13 @@ export interface UpdateTaskPayload {
   description?: string;
   deadline?: string;
   priority?: number;
+  category?: TaskCategory;
 }
 
 export const taskApi = {
   createTask: (payload: CreateTaskPayload) =>
     axiosInstance.post('/tasks/create', payload),
 
-  // Fixed: use Axios params object to generate proper query strings securely
   getAllTasks: (sortby: string, isDeleted: boolean | string) =>
     axiosInstance.get('/tasks/all', {
       params: { sortby, isDeleted },

@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "frontend",
+    "name": "FOCUS TODO",
     "slug": "frontend",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -10,6 +10,7 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.souvik.todobird",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -23,6 +24,12 @@
     },
     "plugins": [
       "@react-native-community/datetimepicker"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "1deae2b0-406f-46eb-a95e-4ee1aab7fca0"
+      }
+    },
+    "owner": "souvikd10"
   }
 }

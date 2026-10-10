@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { register, login, changePassword, logout } from '../controllers/auth.controller';
+import { register, login, changePassword, logout, updatePushToken } from '../controllers/auth.controller';
 import { authenticateToken } from '../../middleware/auth.middleware';
 
 const router = Router();
@@ -107,5 +107,8 @@ router.post('/logout', authenticateToken, logout);
  *         description: Incorrect old password or invalid token.
  */
 router.post('/change-password', authenticateToken, changePassword);
+
+
+router.post('/push-token', authenticateToken, updatePushToken);
 
 export const authRouter = router;

@@ -1,11 +1,14 @@
 import { create } from 'zustand';
 import { taskApi, CreateTaskPayload, UpdateTaskPayload } from '../api/taskApi';
 
+export type TaskCategory = 'WORK' | 'PERSONAL' | 'ACADEMIC' | 'HEALTH' | 'SYSTEM';
+
 export interface LightTask {
   id: string;
   title: string;
   deadline: string;
   priority: number;
+  category: TaskCategory;
   is_completed: boolean;
   is_deleted: boolean;
 }
@@ -47,7 +50,6 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   fetchTasks: async (sortby = 'deadline', isDeleted = false) => {
     set({ isLoading: true });
     try {
-      // Fixed: Call taskApi.getAllTasks instead of non-existent taskApi.get
       const response = await taskApi.getAllTasks(sortby, isDeleted);
       set({ tasks: response.data, isLoading: false });
     } catch (error) {
@@ -68,37 +70,37 @@ export const useTaskStore = create<TaskState>((set, get) => ({
 
   createTask: async (payload) => {
     await taskApi.createTask(payload);
-    await get().fetchTasks("priority", false);
+    await get().fetchTasks('priority', false);
   },
 
   updateTask: async (id, payload) => {
     await taskApi.updateTask(id, payload);
-    await get().fetchTasks("priority", false);
+    await get().fetchTasks('priority', false);
   },
 
   markCompleted: async (id) => {
     await taskApi.markCompleted(id);
-    await get().fetchTasks("priority", false);
+    await get().fetchTasks('priority', false);
   },
 
   addToBin: async (id) => {
     await taskApi.addToBin(id);
-    await get().fetchTasks("priority", false);
+    await get().fetchTasks('priority', false);
   },
 
   restoreFromBin: async (id) => {
     await taskApi.restoreFromBin(id);
-    await get().fetchTasks("priority", false);
+    await get().fetchTasks('priority', false);
   },
 
   removeFromBin: async (id) => {
     await taskApi.removeFromBin(id);
-    await get().fetchTasks("priority", false);
+    await get().fetchTasks('priority', false);
   },
 
   emptyBin: async () => {
     await taskApi.emptyBin();
-    await get().fetchTasks("priority", false);
+    await get().fetchTasks('priority', false);
   },
 
   setFocusTask: (id) => set({ activeFocusTaskId: id }),

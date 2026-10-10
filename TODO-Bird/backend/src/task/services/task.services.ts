@@ -1,6 +1,7 @@
-import Task, { ITask, TaskPriority } from '../modules/Task';
+import Task, { ITask, TaskPriority, TaskCategory } from '../modules/Task';
 import { LightTaskDTO, HeavyTaskDTO, toLightTaskDTO, toHeavyTaskDTO } from '../dtos/task.dto';
 import { AppError } from '../../utils/AppError';
+import User from '../../auth/modules/User';
 
 export async function createTaskService(
     userId: string,
@@ -9,6 +10,7 @@ export async function createTaskService(
         description?: string;
         deadline: Date;
         priority?: TaskPriority;
+        category?: TaskCategory;
     }
 ): Promise<HeavyTaskDTO> {
 
@@ -42,12 +44,19 @@ export async function createTaskService(
         throw new AppError('Invalid Priority.', 400);
     }
 
+    if (data.category !== undefined) {
+        if (!Object.values(TaskCategory).includes(data.category)) {
+            throw new AppError('Invalid Category.', 400);
+        }
+    }
+
     const newTask = await Task.create({
         userId,
         title: data.title,
         description: data.description || '',
         deadline: new Date(data.deadline),
         priority: data.priority ?? TaskPriority.MID,
+        category: data.category ?? TaskCategory.PERSONAL,
         is_completed: false,
         is_deleted: false,
     });
@@ -93,6 +102,7 @@ export async function updateTaskService(
         description?: string;
         deadline?: string | Date;
         priority?: TaskPriority;
+        category?: TaskCategory;
     }
 ): Promise<HeavyTaskDTO> {
     const task = await Task.findOne({ _id: taskId, userId, is_deleted: false, is_completed: false });
@@ -110,11 +120,19 @@ export async function updateTaskService(
 
     if (data.title !== undefined) task.title = data.title;
     if (data.description !== undefined) task.description = data.description;
+    
     if (data.priority !== undefined) {
         if (typeof data.priority !== 'number' || ![0, 1, 2].includes(data.priority)) {
             throw new AppError('Invalid Priority.', 400);
         }
         task.priority = data.priority;
+    }
+
+    if (data.category !== undefined) {
+        if (!Object.values(TaskCategory).includes(data.category)) {
+            throw new AppError('Invalid Category.', 400);
+        }
+        task.category = data.category;
     }
 
     if (data.deadline !== undefined) {
