@@ -54,6 +54,10 @@ This section outlines known architectural limitations, potential edge cases, and
 
 ---
 
+## 0. State Reload issue:
+every time on switching/ navigating to recycle bin and coming back, auto reload/refresh is not waking properly/automatic, 
+so manual reload(drag down and load needed). 
+
 ## 1. Architectural & Scaling Limitations
 
 ### A. Single-Instance Notification Cron Concurrency

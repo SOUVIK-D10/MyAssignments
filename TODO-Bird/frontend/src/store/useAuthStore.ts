@@ -38,7 +38,6 @@ export const useAuthStore = create<AuthState>((set) => ({
       const token = await SecureStore.getItemAsync('userToken');
       if (token) {
         set({ token, isAuthenticated: true, isLoading: false });
-        // CRITICAL FIX: Ensure push token is registered when session is restored on app boot
         await registerForPushNotificationsAsync();
       } else {
         set({ token: null, isAuthenticated: false, isLoading: false });

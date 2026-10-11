@@ -2,6 +2,7 @@ import axiosInstance from './axiosInstance';
 
 export type TaskCategory = 'WORK' | 'PERSONAL' | 'ACADEMIC' | 'HEALTH' | 'SYSTEM';
 
+// RESPONSIBLE FOR CREATE TASK
 export interface CreateTaskPayload {
   title: string;
   description?: string;
@@ -10,6 +11,7 @@ export interface CreateTaskPayload {
   category?: TaskCategory;
 }
 
+// RESPONSIBLE FOR UPDATE TASK (same but kept different for better maintainability and future updates)
 export interface UpdateTaskPayload {
   title?: string;
   description?: string;
@@ -18,6 +20,7 @@ export interface UpdateTaskPayload {
   category?: TaskCategory;
 }
 
+// END POINTS
 export const taskApi = {
   createTask: (payload: CreateTaskPayload) =>
     axiosInstance.post('/tasks/create', payload),

@@ -2,18 +2,20 @@ import Constants from 'expo-constants';
 import { Alert, Platform } from 'react-native';
 import axiosInstance from '../api/axiosInstance';
 
-// Expo SDK 53+ removed remote push notifications from Expo Go on Android.
+// Expo SDK 53+ removed remote push notifications from Expo Go on Android. So custom handlers and checks implemented
 const isExpoGoAndroid = Constants.appOwnership === 'expo' && Platform.OS === 'android';
 
 export async function registerForPushNotificationsAsync() {
-  // Completely bypass notification logic on Expo Go Android to prevent crash
+
+  // This is safty to prevent crash
   if (isExpoGoAndroid) {
-    console.log('Expo Go on Android detected: Skipping push notification setup.');
+    // TEMPORARY LOG FOR DEBUGGING
+    // console.log('Expo Go on Android detected: Skipping push notification setup.');
     return;
   }
 
   try {
-    // Dynamically require packages ONLY when safe (Development Builds / iOS / Native builds)
+    // SAFETY-NET Dynamically require packages ONLY when safe 
     const Notifications = require('expo-notifications');
     const Device = require('expo-device');
 
@@ -53,14 +55,17 @@ export async function registerForPushNotificationsAsync() {
       const pushToken = tokenData.data;
 
       // TEMPORARY DEBUG ALERT
-      Alert.alert("Token Fetched", pushToken);
+      // Alert.alert("Token Fetched", pushToken);
 
       await axiosInstance.post('/auth/push-token', { pushToken });
-      Alert.alert("Sync Success", "Token sent to backend!");
+          // TEMPORARY DEBUG ALERT
+      // Alert.alert("Sync Success", "Token sent to backend!");
+
     } catch (error) {
-      // TEMPORARY ERROR ALERT
-      Alert.alert("Push Error", JSON.stringify(error));
-      console.error('Error in push notification setup:', error);
+      // IGNORE IF FAIL
+
+          // TEMPORARY DEBUG ALERT
+      // Alert.alert("Token Fetched FAIL | NOTIFICATION DISABLED");
     }
 
     if (Platform.OS === 'android') {

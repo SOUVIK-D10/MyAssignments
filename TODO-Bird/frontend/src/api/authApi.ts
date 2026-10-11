@@ -1,5 +1,6 @@
 import axiosInstance from './axiosInstance';
 
+// END POINTS
 export const authApi = {
   register: (email: string, password: string) =>
     axiosInstance.post('/auth/register', { email, password }),

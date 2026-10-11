@@ -63,6 +63,7 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
     );
   }
 
+  // Handle Date Time Changes
   const handleDateChange = (event: any, selectedDate?: Date) => {
     setShowPicker(false);
     if (selectedDate) {
@@ -70,11 +71,13 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
     }
   };
 
+  // Handle Date Time Changes
   const openPicker = (mode: 'date' | 'time') => {
     setPickerMode(mode);
     setShowPicker(true);
   };
 
+  // Handle Save Edits
   const handleSaveEdit = async () => {
     try {
       await updateTask(id, {
@@ -91,6 +94,7 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
     }
   };
 
+  // Handle multi-ple action via 1 button
   const handleAction = async () => {
     if (selectedTask.is_deleted) {
       Alert.alert('Restore', 'Restoring task...');
@@ -105,6 +109,7 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
     }
   };
 
+  // Handle soft delete
   const handleSoftDelete = async () => {
     Alert.alert(
       'MOVE THIS ITEM TO BIN',
@@ -124,6 +129,7 @@ export const TaskDetailScreen = ({ route, navigation }: any) => {
     );
   };
 
+  // Handle hard delete
   const handleHardDelete = async () => {
     Alert.alert(
       'DELETE THIS ITEM',

@@ -2,9 +2,9 @@ import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
-const BASE_URL = 'https://zack-submammary-jacquiline.ngrok-free.dev/api';
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
 
-
+// Configuring client
 const axiosInstance = axios.create({
   baseURL: BASE_URL,
   headers: {
@@ -13,7 +13,7 @@ const axiosInstance = axios.create({
   },
 });
 
-// Automatic Bearer Token injection
+// Bearer Token injection
 axiosInstance.interceptors.request.use(
   async (config) => {
     const token = await SecureStore.getItemAsync('userToken');
