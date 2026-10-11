@@ -12,6 +12,9 @@
       "distribution": "internal",
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://zack-submammary-jacquiline.ngrok-free.dev/api"
       }
     },
     "production": {
