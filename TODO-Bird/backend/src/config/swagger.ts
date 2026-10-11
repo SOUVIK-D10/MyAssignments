@@ -1,3 +1,5 @@
+// Swagger Config for documentation of api
+
 import swaggerJSDoc from 'swagger-jsdoc';
 
 const options: swaggerJSDoc.Options = {

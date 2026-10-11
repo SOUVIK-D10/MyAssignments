@@ -1,5 +1,5 @@
 import Constants from 'expo-constants';
-import { Platform } from 'react-native';
+import { Alert, Platform } from 'react-native';
 import axiosInstance from '../api/axiosInstance';
 
 // Expo SDK 53+ removed remote push notifications from Expo Go on Android.
@@ -45,9 +45,23 @@ export async function registerForPushNotificationsAsync() {
       return;
     }
 
-    const tokenData = await Notifications.getExpoPushTokenAsync();
-    await axiosInstance.post('/auth/push-token', { pushToken: tokenData.data });
-    console.log('Push token successfully registered with backend.');
+    // Inside registerForPushNotificationsAsync catch or success blocks:
+    try {
+      const tokenData = await Notifications.getExpoPushTokenAsync({
+        projectId: '1deae2b0-406f-46eb-a95e-4ee1aab7fca0',
+      });
+      const pushToken = tokenData.data;
+
+      // TEMPORARY DEBUG ALERT
+      Alert.alert("Token Fetched", pushToken);
+
+      await axiosInstance.post('/auth/push-token', { pushToken });
+      Alert.alert("Sync Success", "Token sent to backend!");
+    } catch (error) {
+      // TEMPORARY ERROR ALERT
+      Alert.alert("Push Error", JSON.stringify(error));
+      console.error('Error in push notification setup:', error);
+    }
 
     if (Platform.OS === 'android') {
       await Notifications.setNotificationChannelAsync('default', {

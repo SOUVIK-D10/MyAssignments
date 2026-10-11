@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { AppError } from '../utils/AppError';
 
+// THIS MIDDLEWARE HANDLES EXCEPTION GLOBALLY
+
 export const globalErrorHandler = (
   err: any,
   _req: Request,
@@ -10,21 +12,21 @@ export const globalErrorHandler = (
   let statusCode = err.statusCode || 500;
   let message = err.message || 'Internal Server Error';
 
-  // 1. Mongoose Validation Error (e.g., missing required fields)
+  // 1. Mongoose Validation Error ( missing required fields)
   if (err.name === 'ValidationError') {
     statusCode = 400;
     const errors = Object.values(err.errors).map((e: any) => e.message);
     message = `Validation Error: ${errors.join(', ')}`;
   }
 
-  // 2. Mongoose Duplicate Key Error (e.g., unique email constraint)
+  // 2. Mongoose Duplicate Key Error ( unique email constraint)
   if (err.code === 11000) {
     statusCode = 400;
     const field = Object.keys(err.keyValue)[0];
     message = `Duplicate field value entered for '${field}'. Please use another value.`;
   }
 
-  // 3. Mongoose Invalid ObjectId (e.g., malformed URL params)
+  // 3. Mongoose Invalid ObjectId ( malformed URL params)
   if (err.name === 'CastError') {
     statusCode = 400;
     message = `Invalid format for field '${err.path}': ${err.value}`;

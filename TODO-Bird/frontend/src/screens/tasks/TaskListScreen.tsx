@@ -23,13 +23,13 @@ import {
   SortOrder,
 } from '../../components/FilterModel';
 import { FocusModeModal } from '../../components/FocusModeModal';
+import { registerForPushNotificationsAsync } from '../../utils/registerNotifications';
 
 export const TaskListScreen = ({ navigation }: any) => {
   const { tasks, isLoading, fetchTasks, markCompleted } = useTaskStore();
   const logout = useAuthStore((s) => s.logout);
 
   const [showFocusModal, setShowFocusModal] = useState(false);
-
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showChooseMenu, setShowChooseMenu] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -42,8 +42,14 @@ export const TaskListScreen = ({ navigation }: any) => {
   const [sortField, setSortField] = useState<SortField>('deadline');
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
 
+  // Initial fetch
   useEffect(() => {
     fetchTasks("priority", false);
+  }, []);
+
+  // Trigger Push Notification registration once user hits dashboard
+  useEffect(() => {
+    registerForPushNotificationsAsync();
   }, []);
 
   const isFilterActive =
@@ -58,7 +64,6 @@ export const TaskListScreen = ({ navigation }: any) => {
   const filteredAndSortedTasks = useMemo(() => {
     return tasks
       .filter((task) => {
-        // Search Filter
         if (
           searchQuery &&
           !task.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -66,14 +71,9 @@ export const TaskListScreen = ({ navigation }: any) => {
           return false;
         }
 
-        // Completion Status Filter
         if (completedFilter === 'COMPLETED' && !task.is_completed) return false;
         if (completedFilter === 'PENDING' && task.is_completed) return false;
-
-        // Priority Filter
         if (priorityFilter !== 'ALL' && task.priority !== priorityFilter) return false;
-
-        // Category Filter
         if (categoryFilter !== 'ALL' && task.category !== categoryFilter) return false;
 
         return true;
@@ -81,22 +81,18 @@ export const TaskListScreen = ({ navigation }: any) => {
       .sort((a, b) => {
         let diff = 0;
 
-        // 1. Primary Sort Criteria
         if (sortField === 'deadline') {
           diff = new Date(a.deadline || 0).getTime() - new Date(b.deadline || 0).getTime();
-          // Tie-breaker: Default sort by Category
           if (diff === 0) {
             diff = (a.category || '').localeCompare(b.category || '');
           }
         } else if (sortField === 'priority') {
           diff = a.priority - b.priority;
-          // Tie-breaker: Default sort by Category
           if (diff === 0) {
             diff = (a.category || '').localeCompare(b.category || '');
           }
         } else if (sortField === 'category') {
           diff = (a.category || '').localeCompare(b.category || '');
-          // Tie-breaker: Default sort by Priority
           if (diff === 0) {
             diff = a.priority - b.priority;
           }
@@ -104,7 +100,6 @@ export const TaskListScreen = ({ navigation }: any) => {
           diff = a.title.localeCompare(b.title);
         }
 
-        // Apply Order Direction
         return sortOrder === 'asc' ? diff : -diff;
       });
   }, [tasks, searchQuery, completedFilter, priorityFilter, categoryFilter, sortField, sortOrder]);

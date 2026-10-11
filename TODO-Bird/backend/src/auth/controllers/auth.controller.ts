@@ -53,7 +53,7 @@ const logout = async (req: AuthenticatedRequest, res: Response): Promise<void> =
     }
 };
 
-// RESET / CHANGE PASSWORD
+// RESET/CHANGE PASSWORD
 const changePassword = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const userId = req.userId!;
@@ -70,6 +70,7 @@ const changePassword = async (req: AuthenticatedRequest, res: Response): Promise
     }
 };
 
+// SET PUSH NOTIFICATION TOKEN
 const updatePushToken = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
         const userId = req.userId!;

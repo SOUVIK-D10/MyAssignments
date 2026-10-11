@@ -1,3 +1,5 @@
+// Basic Config for MongoDB using Mongoose
+
 import mongoose from 'mongoose';
 
 export const connectDB = async (): Promise<void> => {

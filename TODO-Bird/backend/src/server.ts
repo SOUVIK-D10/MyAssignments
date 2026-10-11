@@ -10,11 +10,14 @@ import { AppError } from './utils/AppError';
 import { taskRouter } from './task/router/task.router';
 import { initNotificationCron } from './jobs/notification.service';
 
+// IMPORTING .env
 dotenv.config();
 
+// SET UP
 const app: Application = express();
 const PORT = process.env.PORT || 5000;
 
+// Basic Config
 app.use(cors());
 app.use(express.json());
 
@@ -38,6 +41,7 @@ app.use('/*path', (req: Request, _res: Response, next: NextFunction) => {
 // Global Exception Handler Middleware
 app.use(globalErrorHandler);
 
+// Connect to MongoDB
 connectDB().then(() => {
   app.listen(PORT, () => {
     console.log(`[Server] Running on http://localhost:${PORT}`);
@@ -45,6 +49,7 @@ connectDB().then(() => {
   });
 });
 
+// Deploy Corn Job
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   initNotificationCron();

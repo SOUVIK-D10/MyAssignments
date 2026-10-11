@@ -7,6 +7,7 @@ export interface AuthenticatedRequest extends Request {
   token?: string;
 }
 
+// THIS Middleware verifies JWT Token and extracts userId (defense against ID Spoofing)
 export const authenticateToken = async (
   req: AuthenticatedRequest,
   res: Response,

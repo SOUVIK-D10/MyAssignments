@@ -9,14 +9,6 @@ import {
   Alert,
 } from 'react-native';
 
-// Safely import expo-av with error boundary
-let ExpoAudio: any = null;
-try {
-  ExpoAudio = require('expo-av').Audio;
-} catch (e) {
-  console.warn('expo-av native module not available in this environment.');
-}
-
 interface FocusModeModalProps {
   visible: boolean;
   onClose: () => void;
@@ -24,21 +16,9 @@ interface FocusModeModalProps {
 }
 
 const AMBIENT_SOUNDSCAPES = [
-  {
-    id: 'lofi',
-    title: '🎧 Lo-Fi Chill Beats',
-    source: require('../../assets/sounds/lofi.mp3'),
-  },
-  {
-    id: 'rain',
-    title: '🌧️ Ambient Rain & Thunder',
-    source: require('../../assets/sounds/rain.mp3'),
-  },
-  {
-    id: 'synth',
-    title: '🌌 Deep Space Synth',
-    source: require('../../assets/sounds/synth.mp3'),
-  },
+  { id: 'lofi', title: '🎧 Lo-Fi Chill Beats' },
+  { id: 'rain', title: '🌧️ Ambient Rain & Thunder' },
+  { id: 'synth', title: '🌌 Deep Space Synth' },
 ];
 
 export const FocusModeModal: React.FC<FocusModeModalProps> = ({
@@ -51,17 +31,14 @@ export const FocusModeModal: React.FC<FocusModeModalProps> = ({
   const [timeLeft, setTimeLeft] = useState(25 * 60);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
 
-  // --- Audio Player State ---
-  const [sound, setSound] = useState<any>(null);
+  // --- Soundscape State (Visual Only) ---
   const [activeSoundscape, setActiveSoundscape] = useState<string | null>(null);
-  const [isPlayingMusic, setIsPlayingMusic] = useState(false);
 
   // --- Hydration Reminder State ---
   const [waterIntervalMin, setWaterIntervalMin] = useState('30');
   const [waterTimeLeft, setWaterTimeLeft] = useState<number | null>(null);
   const [isWaterActive, setIsWaterActive] = useState(false);
 
-  // Timer Refs
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const waterRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -100,69 +77,6 @@ export const FocusModeModal: React.FC<FocusModeModalProps> = ({
     };
   }, [isWaterActive, waterTimeLeft]);
 
-  // Stop & Unload Audio safely
-  const stopAudio = async () => {
-    if (sound) {
-      try {
-        await sound.stopAsync();
-        await sound.unloadAsync();
-      } catch (err) {
-        // Ignore cleanup errors
-      }
-      setSound(null);
-    }
-    setActiveSoundscape(null);
-    setIsPlayingMusic(false);
-  };
-
-  useEffect(() => {
-    return () => {
-      stopAudio();
-    };
-  }, [sound]);
-
-  // Handle Soundscape Toggle (Play / Turn Off / Switch)
-  const handleToggleSoundscape = async (track: (typeof AMBIENT_SOUNDSCAPES)[0]) => {
-    if (!ExpoAudio) {
-      Alert.alert('Audio Unavailable', 'Native audio module is not loaded in this build.');
-      return;
-    }
-
-    try {
-      // Requirement 1: If clicking the currently playing track, turn it OFF
-      if (activeSoundscape === track.id && isPlayingMusic) {
-        await stopAudio();
-        return;
-      }
-
-      // Stop previous audio if active
-      if (sound) {
-        await sound.stopAsync();
-        await sound.unloadAsync();
-        setSound(null);
-      }
-
-      // Configure playback mode
-      await ExpoAudio.setAudioModeAsync({
-        playsInSilentModeIOS: true,
-        staysActiveInBackground: true,
-      });
-
-      // Requirement 2: Load local asset with looping enabled ({ isLooping: true })
-      const { sound: newSound } = await ExpoAudio.Sound.createAsync(
-        track.source,
-        { shouldPlay: true, isLooping: true }
-      );
-
-      setSound(newSound);
-      setActiveSoundscape(track.id);
-      setIsPlayingMusic(true);
-    } catch (err) {
-      console.error('Audio playback error:', err);
-      Alert.alert('Audio Error', 'Ensure MP3 files are placed in assets/sounds/');
-    }
-  };
-
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
@@ -179,9 +93,12 @@ export const FocusModeModal: React.FC<FocusModeModalProps> = ({
     Alert.alert('Reminder Set', `You will be reminded to drink water every ${mins} minutes.`);
   };
 
-  const handleClose = async () => {
+  const handleToggleSoundscape = (id: string) => {
+    setActiveSoundscape(activeSoundscape === id ? null : id);
+  };
+
+  const handleClose = () => {
     setIsTimerRunning(false);
-    await stopAudio();
     onClose();
   };
 
@@ -258,12 +175,12 @@ export const FocusModeModal: React.FC<FocusModeModalProps> = ({
             </View>
           </View>
 
-          {/* 2. Ambient Soundscapes Section */}
+          {/* 2. Ambient Soundscapes Section (Visual Only) */}
           <View style={styles.sectionCard}>
-            <Text style={styles.sectionLabel}>AMBIENT SOUNDSCAPES (LOOPING)</Text>
+            <Text style={styles.sectionLabel}>AMBIENT SOUNDSCAPES (VISUAL MODE)</Text>
             <View style={styles.trackList}>
               {AMBIENT_SOUNDSCAPES.map((soundscape) => {
-                const isSelected = activeSoundscape === soundscape.id && isPlayingMusic;
+                const isSelected = activeSoundscape === soundscape.id;
                 return (
                   <TouchableOpacity
                     key={soundscape.id}
@@ -271,7 +188,7 @@ export const FocusModeModal: React.FC<FocusModeModalProps> = ({
                       styles.trackBtn,
                       isSelected && styles.trackBtnActive,
                     ]}
-                    onPress={() => handleToggleSoundscape(soundscape)}
+                    onPress={() => handleToggleSoundscape(soundscape.id)}
                   >
                     <Text
                       style={[
@@ -282,7 +199,7 @@ export const FocusModeModal: React.FC<FocusModeModalProps> = ({
                       {soundscape.title}
                     </Text>
                     <Text style={styles.statusIndicator}>
-                      {isSelected ? '▶ PLAYING (TAP TO OFF)' : 'OFF'}
+                      {isSelected ? '▶ ACTIVE' : 'OFF'}
                     </Text>
                   </TouchableOpacity>
                 );

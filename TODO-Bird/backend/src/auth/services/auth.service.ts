@@ -4,6 +4,7 @@ import User from '../modules/User';
 import { AppError } from '../../utils/AppError';
 import TokenBlacklist from '../modules/TokenBlacklist';
 
+// REGISTRATION SERVICE. (Email Not verified and treated as username instead for simplicity)
 async function registerService(email: string, password: string): Promise<any> {
     if (!email || !password) {
         throw new AppError('Email and password are required.', 400);
@@ -12,9 +13,11 @@ async function registerService(email: string, password: string): Promise<any> {
     if (existingUser) {
         throw new AppError('User with this email already exists.', 400);
     }
+    //---------------PASSWORD HASHING-------------
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
     const newUser = await User.create({ email, passwordHash });
+    //-------------------------------------
     const token = jwt.sign(
         { userId: newUser._id, email: newUser.email },
         process.env.JWT_SECRET || 'fallback_secret',
@@ -23,6 +26,7 @@ async function registerService(email: string, password: string): Promise<any> {
     return { token, user: { id: newUser._id, email: newUser.email } };
 }
 
+// LOGIN SERVICE. (MATCHES Password and email and generate access token)
 async function loginService(email: string, password: string): Promise<any> {
     if (!email || !password) {
         throw new AppError('Email and password are required.', 400);
@@ -43,6 +47,7 @@ async function loginService(email: string, password: string): Promise<any> {
     return { token, user: { id: user._id, email: user.email } };
 }
 
+// LOGOUT SERVICE. (MATCH TOKEN, PUT TOKEN IN Blacklist and then)
 async function logoutService(token: string): Promise<void> {
   if (!token) {
     throw new AppError('Token is required for logout.', 400);
@@ -50,6 +55,11 @@ async function logoutService(token: string): Promise<void> {
   await TokenBlacklist.create({ token });
 }
 
+// CHANGE PASSWORD. 
+/* 
+    TAKES OLD AND NEW PASSWORD then COMPARES THEM IF SAME throws error,
+    IF not matches old password with current and updates accordingly
+ */
 async function changePasswordService(
   userId: string,
   oldPasswordInput: string,
@@ -78,6 +88,7 @@ async function changePasswordService(
   await user.save();
 }
 
+// PUSH NOTIFICATION TOKEN UPDATE/OVERRIDE
 async function updatePushTokenService(userId: string, pushToken: string): Promise<void> {
     if (!pushToken) {
         throw new AppError('Push token is required.', 400);

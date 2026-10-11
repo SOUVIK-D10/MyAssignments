@@ -26,6 +26,7 @@ export interface HeavyTaskDTO {
   updatedAt: Date;
 }
 
+// MAP TO Light DTO
 export const toLightTaskDTO = (task: ITask): LightTaskDTO => ({
   id: task._id.toString(),
   title: task.title,
@@ -36,6 +37,7 @@ export const toLightTaskDTO = (task: ITask): LightTaskDTO => ({
   is_deleted: task.is_deleted,
 });
 
+// MAP to Heavy DTO
 export const toHeavyTaskDTO = (task: ITask): HeavyTaskDTO => ({
   id: task._id.toString(),
   title: task.title,
