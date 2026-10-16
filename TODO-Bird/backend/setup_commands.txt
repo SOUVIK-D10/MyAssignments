@@ -1,4 +1,0 @@
-npm install express mongoose dotenv jsonwebtoken bcryptjs cors
-npm install -D typescript @types/node @types/express @types/mongoose @types/jsonwebtoken @types/bcryptjs @types/cors ts-node-dev
-npm install swagger-ui-express swagger-jsdoc
-npm install -D @types/swagger-ui-express @types/swagger-jsdoc
